@@ -7,6 +7,13 @@ EMPLOYERS_DATA = {1740: "Яндекс", 1111058: "Rockit", 9187006: "Answeroom",
 
 
 def get_data_from_hh(employers_dict: dict) -> list:
+    """
+    Функция получения данных по вакансиям от HH API
+    Считывает максимально возможное количество вакансий
+    по указанным работодателям и возвращает json raw список
+    :param employers_dict: словарь с id и названиями работодателей
+    :return: список raw json со всеми данными по вакансиям
+    """
     json_data_list = []
     for employee in employers_dict:
         print(f'Считываются вакансии организации {employers_dict[employee]}')
@@ -31,33 +38,43 @@ def get_data_from_hh(employers_dict: dict) -> list:
 
 
 def get_vacations_items(json_data_list: list) -> list:
-
+    """
+    Функция для обработки вакансий.
+    Выбирает конкретные поля и объединяет в список кортежей.
+    В случае отсутствия данных - формирует их.
+    :param json_data_list: Список raw json со всеми данными по вакансиям
+    :return: список кортежей с выбранными данными по вакансиям
+    """
     vacation_item_list = []
     for items in json_data_list:
-        vacancy_data = {"id": items['id'], "name": items['name'], "company_id": items['employer']['id']}
+        vacancy_data_1 = (items['id'], items['name'], items['employer']['id'])
 
         if items['salary'] is not None:
             if items['salary']['from'] is not None:
-                vacancy_data["salary_from"] = items['salary']['from']
+                salary_from = items['salary']['from']
             else:
-                vacancy_data["salary_from"] = None
+                salary_from = None
             if items['salary']['to'] is not None:
-                vacancy_data["salary_to"] = items['salary']['to']
+                salary_to = items['salary']['to']
             else:
-                vacancy_data["salary_to"] = None
+                salary_to = None
         else:
-            vacancy_data["salary_from"] = None
-            vacancy_data["salary_to"] = None
+            salary_from = None
+            salary_to = None
 
-        vacancy_data["url"] = items['alternate_url']
-        vacancy_data["description"] = items['snippet']['requirement']
-        vacancy_data["name"] = items['name']
+        vacancy_data_2 = (salary_from, salary_to, items['alternate_url'], items['snippet']['requirement'])
+        vacancy_data = vacancy_data_1 + vacancy_data_2
         vacation_item_list.append(vacancy_data)
     return vacation_item_list
 
 
 def get_employee_data(employers_dict: dict) -> list:
-
+    """
+    Функция получения данных по работодателям от HH API
+    Считывает данные по указанным работодателям и возвращает json raw список
+    :param employers_dict: словарь с id и названиями работодателей
+    :return: список raw json со всеми данными по работодателям
+    """
     json_data_list = []
     for employee_id in employers_dict.keys():
         print(f'Получение данных о работодателе {employers_dict[employee_id]}')
@@ -69,11 +86,39 @@ def get_employee_data(employers_dict: dict) -> list:
 
 
 def get_employee_items(employers_list: list) -> list:
-
+    """
+    Функция для обработки данных работодателей.
+    Выбирает конкретные поля и объединяет в список кортежей.
+    В случае отсутствия данных - формирует их.
+    :param employers_list: Список raw json со всеми данными по работодателям
+    :return: список кортежей с выбранными данными работодателей
+    """
     employee_item_list = []
     for items in employers_list:
         industries_record = ''
-        employee_item_list.append({
+        employee_tuple_1 = (items['id'], items['name'], items['area']['name'],
+                            items['site_url'])
+
+        if items['industries'] != []:
+            for recs in items['industries']:
+                industries_record += recs['name'] + '. '
+            industries = industries_record
+        else:
+            industries = 'Не указано.'
+        employee_tuple_2 = (items['alternate_url'], industries)
+        employee_item_list.append(employee_tuple_1 + employee_tuple_2)
+    return employee_item_list
+
+
+# api_data = get_data_from_hh({41862: "Контур"})
+# print(len(api_data))
+# api_recs = get_vacations_items(api_data)
+# print(api_recs)
+# print(len(api_recs))
+# emp = get_employee_data(EMPLOYERS_DATA)
+# print(get_employee_items(emp))
+
+"""employee_item_list.append({
              'id': items['id'],
              'name': items['name'],
              'city': items['area']['name'],
@@ -85,15 +130,4 @@ def get_employee_items(employers_list: list) -> list:
                 industries_record += '. ' + recs['name']
             employee_item_list[-1]['industries'] = industries_record
         else:
-            employee_item_list[-1]['industries'] = 'Не указано.'
-
-    return employee_item_list
-
-
-# api_data = get_data_from_hh({9187006: "Answeroom"})
-# print(len(api_data))
-# api_recs = get_vacations_items(api_data)
-# print(api_recs)
-# print(len(api_recs))
-# emp = get_employee_data(EMPLOYERS_DATA)
-# print(get_employee_items(emp))
+            employee_item_list[-1]['industries'] = 'Не указано.'"""
